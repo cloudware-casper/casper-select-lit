@@ -272,7 +272,6 @@ class CasperSelectLit extends LitElement {
         .dataSize="${this._dataLength}"
         .renderLine="${this._renderLine}"
         .startIndex="${this._initialIdx}"
-        .unlistedItem="${this._unlistedItem}"
         .unsafeRender="${this.unsafeRender}"
         .renderNoItems="${this._renderNoItems}"
         .renderPlaceholder="${this.renderPlaceholder}">
@@ -323,7 +322,7 @@ class CasperSelectLit extends LitElement {
           ? this._initialItems.filter(item => this._includesNormalized(item[this.textProp],this._searchValue))
           : JSON.parse(JSON.stringify(this._initialItems));
 
-        if (this.acceptUnlistedValue) this._setUnlistedValue();
+        if (this.acceptUnlistedValue && this._getUnlistedValue()) this.items.push(this._getUnlistedValue());
 
         // this._dataLength = this.items.length;
         await this._updateScroller();
@@ -561,7 +560,6 @@ class CasperSelectLit extends LitElement {
    * Gets called when users scrolls to fetch more items from the server
    */
   async _fetchItems (dir, index) {
-    // console.log(`%c Requested -> ${index}`, 'background: red; color: white');
     if (dir === 'up') {
       const requestPayload = {
                               idColumn: this.idColumn,
@@ -730,7 +728,7 @@ class CasperSelectLit extends LitElement {
       this.items = [];
     }
 
-    if (this.acceptUnlistedValue) this._setUnlistedValue();
+    if (this.acceptUnlistedValue && this._getUnlistedValue()) this.items.push(this._getUnlistedValue());
 
     this.loading = false;
 
@@ -1002,17 +1000,16 @@ class CasperSelectLit extends LitElement {
     this._popover.resetMinWidth = true;
   }
 
-  _setUnlistedValue () {
+  _getUnlistedValue () {
     const searchMatchesId = this.items.filter(e => e.id === this._searchValue).length;
 
     if (this._searchValue !== undefined && this._searchValue !== '' && !searchMatchesId) {
       const unlistedItem = {unlisted: true};
-      unlistedItem.id = this._searchValue;
+      unlistedItem.id = 'UL - ' + this._searchValue;
       unlistedItem[this.textProp] = this._searchValue;
-      this._unlistedItem = unlistedItem;
-    } else {
-      this._unlistedItem = undefined;
+      return unlistedItem;
     }
+    return false;
   }
 
   async _updateScroller () {
